@@ -8,6 +8,12 @@ services:
     image: mariadb:10.11
     container_name: nextcloud_db
     restart: always
+    # --transaction-isolation=READ-COMMITTED:
+    #    Verhindert Deadlocks (Sperrungen) bei parallelen Zugriffen in Nextcloud.
+    # --log-bin=binlog:
+    #    Aktiviert das Binary-Logging (Protokollbuch für Datenbankänderungen).
+    # --binlog-format=ROW:
+    #    Erzwingt zeilenbasiertes Protokollieren. Pflicht für Nextcloud i.V.m. READ-COMMITTED.
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     volumes:
       - db_data:/var/lib/mysql
@@ -37,6 +43,14 @@ services:
       - caddy_net
       - internal_net_cloud
 
+# ============================================================
+# VOLUMES & DRIVER OPTS EXPLAINED:
+# - driver: local        → Nutzt den lokalen Standard-Docker-Treiber.
+# - type: none           → Kein spezielles Dateisystem (wie NFS) nötig.
+# - o: bind              → Führt einen klassischen Linux Bind-Mount durch.
+# - device: ./path       → Verweist direkt auf deinen Ordner auf dem Server, 
+#                          was Backups und Datenimporte extrem vereinfacht.
+# ============================================================
 volumes:
   db_data:
     driver: local
@@ -51,3 +65,8 @@ volumes:
       type: none
       o: bind
       device: ./data/app
+
+# Das hier benutzen falls auf Windows deployen
+#volumes:
+#  nextcloud_db_data:
+#  nextcloud_app_data:
