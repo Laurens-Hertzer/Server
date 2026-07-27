@@ -1,0 +1,53 @@
+networks:
+  caddy_net:
+    external: true
+  internal_net_cloud:
+
+services:
+  nextcloud_db:
+    image: mariadb:10.11
+    container_name: nextcloud_db
+    restart: always
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+    networks:
+      - internal_net_cloud
+
+  nextcloud_app:
+    image: nextcloud:latest
+    container_name: nextcloud_app
+    restart: always
+    depends_on:
+      - nextcloud_db
+    volumes:
+      - app_data:/var/www/html
+    environment:
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=nextcloud_db
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_DOMAIN}
+    networks:
+      - caddy_net
+      - internal_net_cloud
+
+volumes:
+  db_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/db
+
+  app_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/app
