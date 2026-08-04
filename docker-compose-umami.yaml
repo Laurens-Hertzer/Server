@@ -1,0 +1,40 @@
+networks:
+  caddy_net:
+    external: true
+  internal_net_umami:
+
+services:
+  umami_db:
+    image: postgres:16-alpine
+    container_name: umami_db
+    restart: always
+    volumes:
+      - umami_db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=umami
+      - POSTGRES_USER=umami
+      - POSTGRES_PASSWORD=${UMAMI_DB_PASSWORD}
+    networks:
+      - internal_net_umami
+
+  umami_app:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: umami_app
+    restart: always
+    depends_on:
+      - umami_db
+    environment:
+      - DATABASE_URL=postgresql://umami:${UMAMI_DB_PASSWORD}@umami_db:5432/umami
+      - DATABASE_TYPE=postgresql
+      - APP_SECRET=${UMAMI_APP_SECRET}
+    networks:
+      - caddy_net
+      - internal_net_umami
+
+volumes:
+  umami_db_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/db

@@ -5,3 +5,9 @@ cloud.example.com {
     redir /.well-known/caldav /remote.php/dav 301
     header Strict-Transport-Security "max-age=15552000;"
 }
+
+# Umami Analytics
+analytics.example.com {
+    reverse_proxy umami_app:3000
+    header Strict-Transport-Security "max-age=15552000;"
+}
